@@ -12,7 +12,7 @@ class LinkedPair:
 class HashTable:
     def __init__(self, capacity):
         self.capacity = capacity
-        self.count = count
+        self.count = 0
         self.storage = [None for i in range(capacity)]
 
 
@@ -39,6 +39,8 @@ def hash_table_insert(hash_table, key, value):
         existing_node = existing_node.next
     else:
         hash_table.storage[index] = new_node
+        hash_table.count += 1
+        print("\nCount\n", hash_table.count)
 
 
 # Fill this in.
@@ -56,12 +58,12 @@ def hash_table_remove(hash_table, key):
             if existing_node.key == key:
                 # if last node is not None set it to the next node
                 if last_node:
-                    last_node.next_node = existing_node.next_node
+                    last_node.next = existing_node.next
                 # else set the key
                 else:
-                    hash_table.storage[index] = existing_node.next_node
+                    hash_table.storage[index] = existing_node.next
             last_node = existing_node
-            existing_node = existing_node.next_node
+            existing_node = existing_node.next
     else:
         # If you try to remove a value that isn't there, print a warning.
         print("Unable to remove item")
@@ -80,11 +82,19 @@ def hash_table_retrieve(hash_table, key):
 
 
 def hash_table_resize(hash_table):
-    isNone = 0
-    isSomething = 0
-    for element in hash_table.storage:
-        if hash_table.count/hash_table.capacity >= .5:
-            hash_table.capacity = (hash_table.capacity * 2)
+    # Check if our capacity is 50% or more full
+    if hash_table.count/hash_table.capacity >= .5:
+        # double the capacity
+        new_capacity = (hash_table.capacity * 2)
+        # initialize memory for the new hash
+        new_elements = [None for i in range(new_capacity)]
+        # copy over the data
+        for i in range(hash_table.capacity):
+            if hash_table.storage[i] is not None:
+                print("here")
+                new_elements[i] = hash_table.storage[i]
+        hash_table.storage = new_elements
+        print("new elements", new_elements)
 
 
 def Testing():
@@ -98,10 +108,10 @@ def Testing():
 
     old_capacity = len(ht.storage)
     ht = hash_table_resize(ht)
-    # new_capacity = len(ht.storage)
+    new_capacity = len(ht.storage)
 
-    # print("Resized hash table from " + str(old_capacity)
-    #   + " to " + str(new_capacity) + ".")
+    print("Resized hash table from " + str(old_capacity)
+          + " to " + str(new_capacity) + ".")
 
 
 Testing()
