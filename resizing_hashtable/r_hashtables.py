@@ -13,88 +13,125 @@ class HashTable:
     def __init__(self, capacity):
         self.capacity = capacity
         self.count = 0
-        self.storage = [None for i in range(capacity)]
+        self.storage = [None] * capacity
 
 
-def hash(string):
+def hash(string, max):
     tmp = 5381
-    byte_array = string.encode('utf-8')
-    for byte in byte_array:
-        tmp = ((tmp * 33) ^ byte) % 0x100000000
-    return tmp
+    for x in string:
+        tmp = ((tmp << 5)+tmp) + ord(x)
+    return tmp % max
 
 
 # TODO Handle collisions with LL
 def hash_table_insert(hash_table, key, value):
-    hashed_key = hash(key)
-    index = hashed_key % hash_table.capacity
-    new_node = LinkedPair(key, value)
-    existing_node = hash_table.storage[index]
-    if existing_node:
-        # Look for an existing node with the same key
-        if existing_node.key == key:
-            # If you are overwriting a key with a different value, print a warning.
-            print("You are overwriting an existing key's value.")
-            existing_node.value == value
-        existing_node = existing_node.next
-    else:
-        hash_table.storage[index] = new_node
+    hashed_key = hash(key, hash_table.capacity)
+    # check for existing key
+    if hash_table.storage[hashed_key] == None:
+        # if no key create one with this key and value
+        hash_table.storage[hashed_key] = LinkedPair(key, value)
+        # increment the count
         hash_table.count += 1
-        print("\nCount\n", hash_table.count)
+
+    # else if existing key
+    else:
+        tmp = hash_table.storage[hashed_key]
+        if tmp.key == key:
+            hash_table.storage[hashed_key].value = value
+            return None
+
+        # for handeling duplicates
+        else:
+            while tmp.next is not None:
+                tmp = tmp.next
+
+                if tmp.key == key:
+                    tmp.value = value
+                    return None
+
+        # set the next node to new linked pair
+        tmp.next = LinkedPair(key, value)
+        hash_table.count += 1
+    # if over 80% full resize
+    if hash_table.count >= 0.8 * hash_table.capacity:
+        hash_table = hash_table_resize(hash_table)
 
 
-# Fill this in.
 # If you try to remove a value that isn't there, print a warning.
 def hash_table_remove(hash_table, key):
-     # same setup as insert
-    hashed_key = hash(key)
-    index = hashed_key % hash_table.capacity
+    hashed_key = hash(key, hash_table.capacity)
 
-    existing_node = hash_table.storage[index]
-    if existing_node:
-        last_node = None
-        # while the current index exists
-        while existing_node:
-            if existing_node.key == key:
-                # if last node is not None set it to the next node
-                if last_node:
-                    last_node.next = existing_node.next
-                # else set the key
-                else:
-                    hash_table.storage[index] = existing_node.next
-            last_node = existing_node
-            existing_node = existing_node.next
-    else:
-        # If you try to remove a value that isn't there, print a warning.
-        print("Unable to remove item")
-# Should return None if the key is not found.
+    # check if key exists
+    if hash_table.storage[hashed_key] == None:
+        print("Deleting a key that does not exist.")
         return None
+    else:
+        tmp = hash_table.storage[hashed_key]
 
+        # check if tmp.next is none
+        if tmp.next is not None:
+            while tmp.next is not None:
+                # check for the key in next node
+                if tmp.next.key == key:
+                    tmp.next = tmp.next.next
+                    hash_table.count -= 1
+                    # resize if needed
+                    if hash_table.count >= 0.8 * hash_table.capacity:
+                        hash_table = hash_table_resize(hash_table)
+                        break
+                tmp = tmp.next
+        # check if the key matches
+        else:
+            if tmp.key == key:
+                # set value to None
+                hash_table.storage[hashed_key] = None
+                # resize if needed
+                if hash_table.count >= 0.8 * hash_table.capacity:
+                    hash_table = hash_table_resize(hash_table)
+                return None
 
 # Should return None if the key is not found.
-def hash_table_retrieve(hash_table, key):
-    hashed_key = hash(key)
-    index = hashed_key % hash_table.capacity
 
-    existing_node = hash_table.storage[index]
-    if existing_node:
-        return existing_node.value
+
+def hash_table_retrieve(hash_table, key):
+    hashed_key = hash(key, hash_table.capacity)
+
+    # check that the key exists
+    if hash_table.storage[hashed_key] is not None:
+        tmp = hash_table.storage[hashed_key]
+
+        # handle multiple matching keys
+        while tmp is not None:
+            if tmp.key == key:
+                return tmp.value
+            tmp = tmp.next
+    return None
 
 
 def hash_table_resize(hash_table):
-    # Check if our capacity is 50% or more full
-    if hash_table.count/hash_table.capacity >= .5:
-        # double the capacity
-        new_capacity = (hash_table.capacity * 2)
-        # initialize memory for the new hash
-        new_elements = [None for i in range(new_capacity)]
-        # copy over the data
+    # resize smaller if less than 20% full - create a new table
+    if hash_table.count <= 0.2 * hash_table.capacity:
+        new_hash_table = HashTable(hash_table.capacity/2)
+
+    # resize larger if at least 70% full- create a new table
+    if hash_table.count >= 0.7 * hash_table.capacity:
+        new_hash_table = HashTable(hash_table.capacity * 2)
+
+    # if resizing is needed copy over the data
+    if hash_table.count <= 0.2 * hash_table.capacity or hash_table.count >= 0.7*hash_table.capacity:
         for i in range(hash_table.capacity):
-            if hash_table.storage[i] is not None:
-                print("here")
-                new_elements[i] = hash_table.storage[i]
-        hash_table.storage = new_elements
-        print("new elements", new_elements)
+            tmp = hash_table.storage[i]
+
+            # do not copy over none values
+            if tmp is not None:
+                # insert a new node with the key and value
+                while tmp is not None:
+                    hash_table_insert(new_hash_table, tmp.key, tmp.value)
+                    # check for duplicates
+                    tmp = tmp.next
+        # set the hash table to the new hash table
+        hash_table = new_hash_table
+    return hash_table
 
 
 def Testing():
