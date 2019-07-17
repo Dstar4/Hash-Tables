@@ -136,7 +136,7 @@ class TestFullHashTable(unittest.TestCase):
         return_value = hash_table_retrieve(ht, "key-9")
         self.assertTrue(return_value is None)
 
-    def hash_table_resize(self):
+    def test_hash_table_resize(self):
         ht = HashTable(8)
 
         hash_table_insert(ht, "key-0", "val-0")
